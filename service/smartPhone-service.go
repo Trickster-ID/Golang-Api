@@ -13,7 +13,7 @@ type SmartPhoneService interface {
 	FindHPByCon(condition string) (entity.SmartPhone, error)
 	InsertHP(HPdto dto.SmartPhonePostDTO) (entity.SmartPhone, error)
 	UpdateHP(id int, HPdto dto.SmartPhonePostDTO) (entity.SmartPhone, error)
-	Delete(id int) (entity.SmartPhone, error)
+	DeleteHP(id int) (entity.SmartPhone, error)
 }
 
 type smartPhoneService struct{HpRepo repository.SmartPhoneRepo}
@@ -56,7 +56,7 @@ func (sps *smartPhoneService) UpdateHP(id int, HPdto dto.SmartPhonePostDTO) (ent
 	}
 }
 
-func (sps *smartPhoneService) Delete(id int) (entity.SmartPhone, error){
+func (sps *smartPhoneService) DeleteHP(id int) (entity.SmartPhone, error){
 	res1, err1 := sps.HpRepo.FindHPByID(id)
 	if err1 != nil{
 		return res1, err1

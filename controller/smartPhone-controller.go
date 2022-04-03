@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"go-api/dto"
 	"go-api/entity"
 	"go-api/helper"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,20 +21,39 @@ type SmartPhoneController interface {
 	SpDelete(g *gin.Context)
 }
 
-type smartPhoneController struct{spService service.SmartPhoneService}
+type smartPhoneController struct{
+	spService service.SmartPhoneService
+	jwtService service.JWTService
+}
 
-func NewSmartPhoneController(newSpService service.SmartPhoneService) SmartPhoneController{
-	return &smartPhoneController{newSpService}
+func NewSmartPhoneController(newSpService service.SmartPhoneService, newJwtService service.JWTService) SmartPhoneController{
+	return &smartPhoneController{
+		spService: newSpService,
+		jwtService: newJwtService,
+	}
 }
 
 func (spc *smartPhoneController) SpGetAll(c *gin.Context){
-	res, err := spc.spService.FindHPs()
-	if err != nil {
-		response := helper.BuildErrorResponse("Failed to find all smartphone!", err.Error(), helper.EmptyObject{})
-		c.JSON(http.StatusBadRequest, response)
+	authHeader := c.GetHeader("Authorization")
+	token, errToken := spc.jwtService.ValidateToken(authHeader)
+	if errToken != nil{
+		panic(errToken.Error())
 	}else{
-		response := helper.BuildResponse(true, "OK", res)
-		c.JSON(http.StatusOK, response)
+		claims := token.Claims.(jwt.MapClaims)
+		_, errParse := strconv.ParseUint(fmt.Sprintf("%v", claims["user_id"]), 10, 64)
+		if errParse != nil{
+			panic(errToken.Error())
+		}else{
+			
+		}
+		res, err := spc.spService.FindHPs()
+		if err != nil {
+			response := helper.BuildErrorResponse("Failed to find all smartphone!", err.Error(), helper.EmptyObject{})
+			c.JSON(http.StatusBadRequest, response)
+		}else{
+			response := helper.BuildResponse(true, "OK", res)
+			c.JSON(http.StatusOK, response)
+		}
 	}
 }
 
@@ -73,7 +94,7 @@ func (spc *smartPhoneController) SpDelete(c *gin.Context){
 	if errConv != nil {
 		errorHandling("error when converting ID to int", errConv, c)
 	}else{
-		res, err := spc.spService.Delete(id)
+		res, err := spc.spService.DeleteHP(id)
 		resultHandling("Failed to delete data!", res, err, c)
 	}
 }
